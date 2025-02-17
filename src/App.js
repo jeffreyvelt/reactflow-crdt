@@ -1,12 +1,17 @@
+/**
+ * Interactive Flow Diagram Application
+ * 
+ * This application implements a collaborative flow diagram editor using React Flow
+ * and Velt CRDT for real-time collaboration. Users can create nodes, draw connections,
+ * and dynamically add new nodes by dropping connections onto the canvas.
+ */
+
 import React, { useRef, useCallback } from 'react';
 import {
   ReactFlow,
   MiniMap,
   Controls,
   Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
   useReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react';
@@ -15,6 +20,10 @@ import '@xyflow/react/dist/style.css';
 import { veltStore } from '@velt/crdt-reactflow';
 import { useShallow } from 'zustand/react/shallow';
 
+/**
+ * Zustand state selector for flow diagram state
+ * Extracts necessary state and methods for managing nodes and edges
+ */
 const selector = (state) => ({
   nodes: state.nodes,
   edges: state.edges,
@@ -26,6 +35,7 @@ const selector = (state) => ({
 });
 
 
+// Initial diagram state
 const initialNodes = [
   {
     id: '0',
@@ -35,21 +45,38 @@ const initialNodes = [
   },
 ];
 const initialEdges = [];
-const randomnumber = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
 
-let id = 9;
-const getId = () => `${id++}`;
+// Generate a random user ID for collaboration
+const randomUserId = Math.floor(Math.random() * (100 - 1 + 1)) + 1;
+
+// Node ID generation
+let nodeIdCounter = Math.floor(Math.random() * (1000 - 1 + 1)) + 1;
+const getId = () => `${nodeIdCounter++}`;
+
+// Default node origin point for positioning
 const nodeOrigin = [0.5, 0];
 
+/**
+ * Main Flow Diagram Component
+ * 
+ * Features:
+ * - Real-time collaboration using Velt CRDT
+ * - Dynamic node creation on edge drops
+ * - Interactive node and edge manipulation
+ * - Automatic connection handling
+ */
 const AddNodeOnEdgeDrop = () => {
+  const userId = 'user' + randomUserId;
 
-  const userId = 'user' + randomnumber;
-
-  const storeRef = useRef(veltStore(initialNodes, initialEdges, userId));
+  // Initialize Velt store for collaborative state management
+  const storeRef = useRef(veltStore(initialNodes, initialEdges, userId, { debounceMs: 500 }));
+  
+  // Extract state and methods from the store using shallow comparison
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges } = storeRef.current(
     useShallow(selector),
   );
 
+  // Reference to the flow diagram wrapper for positioning calculations
   const reactFlowWrapper = useRef(null);
 
   // const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -60,14 +87,21 @@ const AddNodeOnEdgeDrop = () => {
   //   [],
   // );
 
+  /**
+   * Handles the end of a connection attempt
+   * If the connection is dropped on the canvas (invalid connection),
+   * creates a new node at that position and connects it
+   */
   const onConnectEnd = useCallback(
     (event, connectionState) => {
-      // when a connection is dropped on the pane it's not valid
       if (!connectionState.isValid) {
-        // we need to remove the wrapper bounds, in order to get the correct position
         const id = getId();
+        
+        // Handle both mouse and touch events
         const { clientX, clientY } =
           'changedTouches' in event ? event.changedTouches[0] : event;
+        
+        // Create new node at the drop position
         const newNode = {
           id,
           position: screenToFlowPosition({
@@ -75,18 +109,18 @@ const AddNodeOnEdgeDrop = () => {
             y: clientY,
           }),
           data: { label: `Node ${id}` },
-          origin: [0.5, 0.0],
+          origin: nodeOrigin,
         };
 
-        // Update nodes using onNodesChange
-        onNodesChange([{ type: 'add', item: newNode }]);
-
-        // Update edges using onEdgesChange
+        // Create edge connecting the source node to the new node
         const newEdge = {
-          id,
+          id: `e${id}`,
           source: connectionState.fromNode.id,
           target: id,
         };
+
+        // Batch the node and edge changes together
+        onNodesChange([{ type: 'add', item: newNode }]);
         onEdgesChange([{ type: 'add', item: newEdge }]);
       }
     },
@@ -108,6 +142,8 @@ const AddNodeOnEdgeDrop = () => {
         nodeOrigin={nodeOrigin}
     >
       <Background  />
+      <MiniMap />
+      <Controls />
     </ReactFlow>
     </div>
   );
