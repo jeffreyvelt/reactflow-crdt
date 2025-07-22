@@ -1,12 +1,12 @@
 {
-  "projectId": "prj_qlGJkKRjTkLVbb0qiGrOisQxFQO7",
+  "projectId": "prj_afcQGDMXpy3KyliNlbK8mnwws5AE",
   "orgId": "team_9bXnbW20pVCHFIWc3ikmXt8G",
   "settings": {
-    "createdAt": 1738433470248,
-    "framework": null,
+    "createdAt": 1739831429365,
+    "framework": "create-react-app",
     "devCommand": null,
     "installCommand": null,
-    "buildCommand": "",
+    "buildCommand": null,
     "outputDirectory": null,
     "rootDirectory": null,
     "directoryListing": false,

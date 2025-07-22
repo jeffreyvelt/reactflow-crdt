@@ -17,7 +17,7 @@ import {
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
-import { veltStore } from '@velt/crdt-reactflow';
+import { veltReactFlowStore } from '@velt/crdt-reactflow';
 import { useShallow } from 'zustand/react/shallow';
 
 /**
@@ -69,7 +69,7 @@ const AddNodeOnEdgeDrop = () => {
   const userId = 'user' + randomUserId;
 
   // Initialize Velt store for collaborative state management
-  const storeRef = useRef(veltStore(initialNodes, initialEdges, userId, { debounceMs: 500 }));
+  const storeRef = useRef(veltReactFlowStore(initialNodes, initialEdges, userId, { debounceMs: 500 }));
   
   // Extract state and methods from the store using shallow comparison
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, setNodes, setEdges } = storeRef.current(
